@@ -69,3 +69,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# Rick stuff
+images/
+*.dict

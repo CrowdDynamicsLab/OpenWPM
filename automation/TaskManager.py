@@ -230,7 +230,6 @@ class TaskManager:
                               "supported." % self.crawl_id)
         while not self.closing:
             time.sleep(10)
-
             # Check browser memory usage
             for browser in self.browsers:
                 try:
@@ -514,7 +513,7 @@ class TaskManager:
                               'SAVE_SCREENSHOT',
                               'SCREENSHOT_FULL_PAGE',
                               'DUMP_PAGE_SOURCE',
-                              'RECURSIVE_DUMP_PAGE_SOURCE']:
+                              'RECURSIVE_DUMP_PAGE_SOURCE', 'RECURSIVE_DUMP_PAGE_SOURCE_TO_DB', 'EXTRACT_IFRAMES']:
                 start_time = time.time()
                 command += (browser.curr_visit_id,)
             elif command[0] in ['DUMP_FLASH_COOKIES', 'DUMP_PROFILE_COOKIES']:

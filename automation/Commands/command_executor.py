@@ -56,6 +56,22 @@ def execute_command(command, webdriver, browser_settings, browser_params,
         browser_commands.recursive_dump_page_source(
             visit_id=command[2], driver=webdriver,
             manager_params=manager_params, suffix=command[1])
+    if command[0] == 'RECURSIVE_DUMP_PAGE_SOURCE_TO_DB':
+        browser_commands.recursive_dump_page_source_to_db(
+            visit_id=command[1], driver=webdriver,
+            manager_params=manager_params)
+
+    if command[0] == 'LOGIN_COLO':
+        browser_commands.login_colo(webdriver)
+
+    if command[0] == 'PROCESS_COLO':
+        browser_commands.process_colo(webdriver, manager_params=manager_params)
+
+    if command[0] == 'PROCESS_DUKE_DIRECTORY':
+        browser_commands.process_duke_directory(webdriver, manager_params=manager_params)
+
+    if command[0] == 'PROCESS_DUKE_PAGE':
+        browser_commands.process_duke_page(webdriver, manager_params=manager_params, browser_params=browser_params)
 
     if command[0] == 'SAVE_SCREENSHOT':
         browser_commands.save_screenshot(
@@ -66,6 +82,17 @@ def execute_command(command, webdriver, browser_settings, browser_params,
         browser_commands.screenshot_full_page(
             visit_id=command[2], crawl_id=browser_params['crawl_id'],
             driver=webdriver, manager_params=manager_params, suffix=command[1])
+    if command[0] == 'EXTRACT_IFRAMES':
+        browser_commands.extract_iframes(
+            webdriver, command[1], browser_params, manager_params)
+    if command[0] == 'RECURSIVE_IFRAMES':
+        browser_commands.recursive_iframes(
+            webdriver, browser_params, manager_params)
+    if command[0] == 'GET_IMAGES_RECURSIVELY':
+        browser_commands.get_images_recursively(webdriver, browser_params, manager_params)
+
+    if command[0] == 'SCREENSHOT_IFRAME_CONTAINING_ADS_RECURSIVELY':
+        browser_commands.screenshot_iframes_containing_ads_recursively(command[1], webdriver, browser_commands, manager_params)
 
     if command[0] == 'RUN_CUSTOM_FUNCTION':
         arg_dict = {"command": command,

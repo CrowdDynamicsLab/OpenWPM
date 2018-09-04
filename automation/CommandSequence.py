@@ -138,6 +138,41 @@ class CommandSequence:
         command = ('DUMP_PAGE_SOURCE', suffix)
         self.commands_with_timeout.append((command, timeout))
 
+    def login_colo(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        "the login_colo command", self)
+        command = ('LOGIN_COLO',)
+        self.commands_with_timeout.append((command, timeout))
+
+    def process_colo(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        "the login_colo command", self)
+        command = ('PROCESS_COLO',)
+        self.commands_with_timeout.append((command, timeout))
+
+
+    def process_duke_directory(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        " the process_duke_directory command", self)
+        command = ('PROCESS_DUKE_DIRECTORY', )
+        self.commands_with_timeout.append((command, timeout))
+
+
+    def process_duke_page(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        " the process_duke_page command", self)
+        command = ('PROCESS_DUKE_PAGE', )
+        self.commands_with_timeout.append((command, timeout))
+
+
     def recursive_dump_page_source(self, suffix='', timeout=30):
         """Dumps rendered source of current page visit to 'sources' dir.
         Unlike `dump_page_source`, this includes iframe sources. Archive is
@@ -163,6 +198,37 @@ class CommandSequence:
             raise CommandExecutionError("No get or browse request preceding "
                                         "the dump page source command", self)
         command = ('RECURSIVE_DUMP_PAGE_SOURCE', suffix)
+        self.commands_with_timeout.append((command, timeout))
+
+    def extract_iframes(self, timeout=60):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        "the save_images command", self)
+        command = ('EXTRACT_IFRAMES',)
+        self.commands_with_timeout.append((command, timeout))
+
+    def recursive_dump_page_source_to_db(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        "the recursive_dump_page_source_to_db command", self)
+        command = ('RECURSIVE_DUMP_PAGE_SOURCE_TO_DB',)
+        self.commands_with_timeout.append((command, timeout))
+
+    def get_images_recursively(self, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding the get_images_recursively command", self)
+        command = ('GET_IMAGES_RECURSIVELY',)
+        self.commands_with_timeout.append((command, timeout))
+
+    def screenshot_iframes_containing_ads_recursively(self, adblock, timeout=30):
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError(
+                "No get or browse request preceding the screenshot_iframe_containing_ads_recursively command", self)
+        command = ('SCREENSHOT_IFRAME_CONTAINING_ADS_RECURSIVELY', adblock,)
         self.commands_with_timeout.append((command, timeout))
 
     def run_custom_function(self, function_handle, func_args=(), timeout=30):
