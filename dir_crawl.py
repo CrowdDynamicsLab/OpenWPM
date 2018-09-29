@@ -14,7 +14,7 @@ MAX_SITE_VISITS = 6
 
 # The list of sites that we wish to crawl
 NUM_BROWSERS = 1
-subs = ['baseball','MMA','Christianity']
+
 
 
 # Loads the manager preference and 3 copies of the default browser dictionaries
@@ -113,6 +113,8 @@ def get_sites_to_visit_from_db():
 
     return sites_to_visit
 
+###List of subreddit csvs to crawl on - nick
+subs = ['baseball','MMA','Christianity']
 if __name__ == "__main__":
     # Instantiates the measurement platform
     # Commands time out by default after 60 seconds
@@ -121,18 +123,27 @@ if __name__ == "__main__":
         sites = []
         manager = TaskManager.TaskManager(manager_params, browser_params)
         command_sequence = CommandSequence.CommandSequence('https://google.com')
+
+        ###commands I wrote to log in to my dummy profile and clear its entire history - nick
         command_sequence.google_login()
         command_sequence.clear_google()
         manager.execute_command_sequence(command_sequence,index = '**')
         time.sleep(30)
         linkdf = pd.read_csv('./sublinks/' + sub + '.csv')
+
+        ###i is the number of pages to randomly select and visit 0 - nick
         for i in range(10):
             sites.append(linkdf.iloc[int(np.random.random()*len(linkdf))][0])
 
         command_sequence = CommandSequence.CommandSequence('https://google.com')
+
+        ###visit_sites() takes a list of urls and visits them all sequentially - nick
         command_sequence.visit_sites(sites)
         manager.execute_command_sequence(command_sequence,index = '**')
-        '''
+
+        ###add a sleep so only one crawl is going on at a time - nick
+        time.sleep(120)
+
         for i in range(3):
             get_ads(manager)
         time.sleep(30)
@@ -144,4 +155,4 @@ if __name__ == "__main__":
 
         # Shuts down the browsers and waits for the data to finish logging
         manager.close()
-        '''
+    

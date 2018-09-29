@@ -22,12 +22,8 @@ def process_subreddit(manager, sub, pages):
 
 if __name__ == "__main__":
     manager = TaskManager.TaskManager(manager_params, browser_params)
-    '''subs = ['baseball','mma','christianity','linux','ethereum','the_donald','sandersforpresident']
+    subs = ['baseball','mma','christianity','linux','ethereum','the_donald','sandersforpresident']
     for sub in subs:
     	process_subreddit(manager,sub, 1)
-    '''
-    command_sequence = CommandSequence.CommandSequence('https://google.com')
-    command_sequence.google_login()
-    command_sequence.clear_google()
-    manager.execute_command_sequence(command_sequence,index = '**')
+
     time.sleep(1000)
