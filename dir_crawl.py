@@ -5,6 +5,8 @@ from six.moves import range
 import re
 import sqlite3
 import time
+import pandas as pd
+import numpy as np
 
 RULE_FILE = 'easylist.txt'
 DB_FILE = "../crawl_data/crawl-data.sqlite"
@@ -12,13 +14,8 @@ MAX_SITE_VISITS = 6
 
 # The list of sites that we wish to crawl
 NUM_BROWSERS = 1
-sites = ['http://www.washingtonpost.com',
-         'http://www.theatlantic.com',
-         # 'http://www.thehill.com',
-         # 'http://www.washingtonpost.com',
-         # 'http://www.wsj.com',
-         # 'http://www.breitbart.com',
-         'http://www.breitbart.com']
+subs = ['baseball','MMA','Christianity']
+
 
 # Loads the manager preference and 3 copies of the default browser dictionaries
 manager_params, browser_params = TaskManager.load_default_params(NUM_BROWSERS)
@@ -52,19 +49,24 @@ def get_site_name(url):
 
 
 def visit_site(manager, site):
-    save_name = get_site_name(site)
+    #save_name = get_site_name(site)
     command_sequence = CommandSequence.CommandSequence(site)
 
     # Start by visiting the page
-    command_sequence.get(sleep=20, timeout=90)
-    command_sequence.extract_links(timeout=90)
-    command_sequence.recursive_dump_page_source_to_db(timeout=90)
-    command_sequence.extract_iframes(timeout=90)  #do this on every page
-    command_sequence.dump_profile_cookies(120)
+    command_sequence.get(sleep=5, timeout=90)
+    #command_sequence.extract_links(timeout=90)
+    #command_sequence.recursive_dump_page_source_to_db(timeout=90)
+    #command_sequence.extract_iframes(timeout=90)  #do this on every page
+    #command_sequence.dump_profile_cookies(120)
 
     # index='**' synchronizes visits between the three browsers
     manager.execute_command_sequence(command_sequence, index='**')
 
+def get_ads(manager):
+    command_sequence = CommandSequence.CommandSequence("https://cnn.com")
+    command_sequence.get(sleep=5, timeout=90)
+    command_sequence.extract_iframes(timeout=90)
+    manager.execute_command_sequence(command_sequence, index='**')
 
 def get_sites_to_visit_from_db():
     sites_to_visit = []
@@ -114,17 +116,32 @@ def get_sites_to_visit_from_db():
 if __name__ == "__main__":
     # Instantiates the measurement platform
     # Commands time out by default after 60 seconds
-    manager = TaskManager.TaskManager(manager_params, browser_params)
+    for sub in subs:
+        DB_FILE = "../crawl_data/"+sub+".sqlite"
+        sites = []
+        manager = TaskManager.TaskManager(manager_params, browser_params)
+        command_sequence = CommandSequence.CommandSequence('https://google.com')
+        command_sequence.google_login()
+        command_sequence.clear_google()
+        manager.execute_command_sequence(command_sequence,index = '**')
+        time.sleep(30)
+        linkdf = pd.read_csv('./sublinks/' + sub + '.csv')
+        for i in range(10):
+            sites.append(linkdf.iloc[int(np.random.random()*len(linkdf))][0])
 
-    for site in sites:
-        visit_site(manager, site)
+        command_sequence = CommandSequence.CommandSequence('https://google.com')
+        command_sequence.visit_sites(sites)
+        manager.execute_command_sequence(command_sequence,index = '**')
+        '''
+        for i in range(3):
+            get_ads(manager)
+        time.sleep(30)
+        #subsequent_visits = get_sites_to_visit_from_db()
+        print 'now visiting subsequent sites'
+        #print subsequent_visits
+        #for site in subsequent_visits:
+        #    visit_site(manager, site)
 
-    time.sleep(30)
-    subsequent_visits = get_sites_to_visit_from_db()
-    print 'now visiting subsequent sites'
-    print subsequent_visits
-    for site in subsequent_visits:
-        visit_site(manager, site)
-
-    # Shuts down the browsers and waits for the data to finish logging
-    manager.close()
+        # Shuts down the browsers and waits for the data to finish logging
+        manager.close()
+        '''
