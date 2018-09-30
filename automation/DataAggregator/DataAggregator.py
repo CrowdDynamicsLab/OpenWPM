@@ -5,6 +5,7 @@ from ..MPLogger import loggingclient
 from sqlite3 import (OperationalError, ProgrammingError, IntegrityError)
 import sqlite3
 import time
+import json
 import six
 from six.moves import range
 
@@ -85,6 +86,8 @@ def process_query(query, curr, logger):
             args[i] = six.text_type(args[i], errors='ignore')
         elif callable(args[i]):
             args[i] = six.text_type(args[i])
+        elif isinstance(args[i], list):
+            args[i] = json.dumps(args[i])
     try:
         if len(args) == 0:
             curr.execute(statement)
