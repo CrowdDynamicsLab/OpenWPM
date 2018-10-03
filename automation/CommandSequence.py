@@ -40,11 +40,11 @@ class CommandSequence:
         self.commands_with_timeout = []
         self.total_timeout = 0
         self.contains_get_or_browse = False
-    def process_reddit(self, timeout = 6000):
+    def process_reddit(self, num_pages, timeout = 6000):
         self.total_timeout+=timeout
         if not self.contains_get_or_browse:
             raise CommandExecutionError("this is an error message")
-        command = ('PROCESS_REDDIT',)
+        command = ('PROCESS_REDDIT', num_pages)
         self.commands_with_timeout.append((command,timeout))
     def google_login(self, timeout = 6000):
         self.total_timeout+=timeout

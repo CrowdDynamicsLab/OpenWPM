@@ -75,7 +75,7 @@ def execute_command(command, webdriver, browser_settings, browser_params,
     if command[0] == 'PROCESS_DUKE_DIRECTORY':
         browser_commands.process_duke_directory(webdriver, manager_params=manager_params)
     if command[0] == 'PROCESS_REDDIT':
-        for i in range(40):
+        for i in range(command[1]):
             print "page ", i
             browser_commands.process_reddit(webdriver, manager_params = manager_params, browser_params= browser_params)
             nextp = webdriver.find_elements(By.PARTIAL_LINK_TEXT, "next")
