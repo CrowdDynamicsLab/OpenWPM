@@ -16,7 +16,7 @@ def process_subreddit(manager, sub, pages):
     print(page)
     command_sequence = CommandSequence.CommandSequence(page)
     command_sequence.get(sleep=1, timeout=10000)
-    command_sequence.process_reddit()
+    command_sequence.process_reddit(pages)
     manager.execute_command_sequence(command_sequence, index='**')
     time.sleep(1)
 
