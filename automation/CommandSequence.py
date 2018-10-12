@@ -40,7 +40,26 @@ class CommandSequence:
         self.commands_with_timeout = []
         self.total_timeout = 0
         self.contains_get_or_browse = False
+    def process_reddit(self, num_pages, timeout = 6000):
+        self.total_timeout+=timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("this is an error message")
+        command = ('PROCESS_REDDIT', num_pages)
+        self.commands_with_timeout.append((command,timeout))
+    def google_login(self, timeout = 6000):
+        self.total_timeout+=timeout
+        command = ('GOOGLE_LOGIN',)
+        self.commands_with_timeout.append((command,timeout))
+    def clear_google(self, timeout = 6000):
+        self.total_timeout+=timeout
 
+        command = ('CLEAR_GOOGLE',)
+        self.commands_with_timeout.append((command,timeout))
+    def visit_sites(self, sitelist, timeout = 6000):
+        self.total_timeout+=timeout
+
+        command = ('VISIT_SITES',sitelist)
+        self.commands_with_timeout.append((command,timeout))
     def get(self, sleep=0, timeout=60):
         """ goes to a url """
         self.total_timeout += timeout

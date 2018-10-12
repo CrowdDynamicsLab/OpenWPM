@@ -4,7 +4,7 @@ from six.moves import range
 import sqlite3
 import time
 
-DB_FILE = "../ad-archive/duke/crawl-data.sqlite"
+DB_FILE = "./tmp/crawl-data.sqlite"
 # Loads the manager preference and 3 copies of the default browser dictionaries
 manager_params, browser_params = TaskManager.load_default_params(1)
 
@@ -37,8 +37,8 @@ def process_directory_page(manager, pagenum=0):
     # Start by visiting the page
     command_sequence.get(sleep=1, timeout=6000)
     # process the directory page, populating the db with the next pages to crawl
-    command_sequence.process_duke_directory(timeout=600)
-    manager.execute_command_sequence(command_sequence, index='**')
+    #command_sequence.process_duke_directory(timeout=600)
+    manager.execute_command_sequence(command_sequence)
 
 if __name__ == "__main__":
     conn = sqlite3.connect(DB_FILE)
@@ -55,8 +55,8 @@ if __name__ == "__main__":
             url = ut[0]
             command_sequence = CommandSequence.CommandSequence(url)
             command_sequence.get(sleep=1, timeout=6000)
-            command_sequence.process_duke_page(timeout=600)
-            manager.execute_command_sequence(command_sequence, index='**')
+            #command_sequence.process_duke_page(timeout=600)
+            manager.execute_command_sequence(command_sequence)
             # conn.execute("UPDATE pages_found SET visited=1 WHERE url=?", (url, ))
             time.sleep(5)
 

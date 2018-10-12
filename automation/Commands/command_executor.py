@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 from . import browser_commands
 from . import profile_commands
-
-
+from selenium.webdriver.common.by import By
+import time
 def execute_command(command, webdriver, browser_settings, browser_params,
                     manager_params, extension_socket):
     """Executes BrowserManager commands
     commands are of form (COMMAND, ARG0, ARG1, ...)
     """
     if command[0] == 'GET':
+        print(command)
         browser_commands.get_website(
             url=command[1], sleep=command[2], visit_id=command[3],
             webdriver=webdriver, browser_params=browser_params,
@@ -63,12 +64,24 @@ def execute_command(command, webdriver, browser_settings, browser_params,
 
     if command[0] == 'LOGIN_COLO':
         browser_commands.login_colo(webdriver)
-
+    if command[0] == 'GOOGLE_LOGIN':
+        browser_commands.google_login(webdriver)
+    if command[0] == 'CLEAR_GOOGLE':
+        browser_commands.clear_google(webdriver)
     if command[0] == 'PROCESS_COLO':
         browser_commands.process_colo(webdriver, manager_params=manager_params)
-
+    if command[0] == 'VISIT_SITES':
+        browser_commands.visit_sites(webdriver, slist = command[1])
     if command[0] == 'PROCESS_DUKE_DIRECTORY':
         browser_commands.process_duke_directory(webdriver, manager_params=manager_params)
+    if command[0] == 'PROCESS_REDDIT':
+        for i in range(command[1]):
+            print "page ", i
+            browser_commands.process_reddit(webdriver, manager_params = manager_params, browser_params= browser_params)
+            nextp = webdriver.find_elements(By.PARTIAL_LINK_TEXT, "next")
+
+            nextp[len(nextp)-1].click()
+            time.sleep(2)
 
     if command[0] == 'PROCESS_DUKE_PAGE':
         browser_commands.process_duke_page(webdriver, manager_params=manager_params, browser_params=browser_params)

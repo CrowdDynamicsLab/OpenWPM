@@ -17,8 +17,10 @@ import urllib
 import sys
 import gzip
 import os
+import pandas as pd
 import time
 from adblockparser import AdblockRules
+import os
 
 from ..SocketInterface import clientsocket
 from ..MPLogger import loggingclient
@@ -30,9 +32,11 @@ from .utils.webdriver_extensions import (scroll_down,
                                          execute_in_all_frames,
                                          execute_script_with_retry,
                                          move_to_and_click)
+from selenium.webdriver.common.by import By
 from six.moves import range
 import six
 from urlparse import urlparse
+import csv
 
 # Constants for bot mitigation
 NUM_MOUSE_MOVES = 10  # Times to randomly move the mouse
@@ -43,7 +47,7 @@ RULE_FILE = 'easylist.txt'
 
 def bot_mitigation(webdriver):
     """ performs three optional commands for bot-detection
-    mitigation when getting a site """
+	mitigation when getting a site """
 
     # bot mitigation 1: move the randomly around a number of times
     window_size = webdriver.get_window_size()
@@ -84,7 +88,7 @@ def login_colo(webdriver):
     pw_element.send_keys(p)
     submit_element = webdriver.find_element_by_class_name("js-send")
     move_to_and_click(webdriver, submit_element)
-    time.sleep(random.random()*4+5.0)
+    time.sleep(random.random() * 4 + 5.0)
 
 
 def process_duke_directory(webdriver, manager_params):
@@ -92,26 +96,26 @@ def process_duke_directory(webdriver, manager_params):
 
     sock.connect(*manager_params['aggregator_address'])
     create_table_query = ("""
-            CREATE TABLE IF NOT EXISTS ads_found (
-              img_source TEXT UNIQUE,
-              table_dict TEXT
-            )
-            """, ())
+			CREATE TABLE IF NOT EXISTS ads_found (
+			  img_source TEXT UNIQUE,
+			  table_dict TEXT
+			)
+			""", ())
     sock.send(create_table_query)
 
     create_table_query = ("""
-                CREATE TABLE IF NOT EXISTS pages_found (
-                  url TEXT UNIQUE,
-                  visited INTEGER DEFAULT 0,
-                  meta TEXT                  
-                )
-                """, ())
+				CREATE TABLE IF NOT EXISTS pages_found (
+				  url TEXT UNIQUE,
+				  visited INTEGER DEFAULT 0,
+				  meta TEXT
+				)
+				""", ())
     sock.send(create_table_query)
 
     insert_query_string = """
-                INSERT INTO pages_found (url, visited)
-                VALUES (?, ?)
-                """
+				INSERT INTO pages_found (url, visited)
+				VALUES (?, ?)
+				"""
     listings = webdriver.find_elements_by_class_name("document")
     for listing_element in listings:
         try:
@@ -124,6 +128,86 @@ def process_duke_directory(webdriver, manager_params):
             tb = traceback.format_exc()
             print tb
     sock.close()
+
+
+def process_reddit(webdriver, manager_params, browser_params):
+    links = webdriver.find_elements_by_tag_name("a")
+    linklist = []
+    exclude = ['imgur', 'reddit', 'redd.it', 'twitter', 'img', 'gfycat', 'streamable']
+    for link in links:
+
+        if ("title" in link.get_attribute("class") and not (any(x in link.get_attribute("href") for x in exclude))):
+            linklist.append(link.get_attribute("href"))
+        else:
+            continue
+    path = 'sublinks/'
+    sub = webdriver.current_url.split('/')[4]
+    if sub + '.csv' in os.listdir(path):
+        with open(path + sub + '.csv', 'a') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            for link in linklist:
+                print(link)
+                csvwriter.writerow([link])
+    else:
+        with open(path + sub + '.csv', 'wb') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            for link in linklist:
+                print(link)
+                csvwriter.writerow([link])
+
+
+def google_login(webdriver):
+    webdriver.get("https://accounts.google.com")
+    time.sleep(2)
+    emailid = webdriver.find_element_by_name("identifier")
+    emailid.send_keys("scrapetest1@gmail.com")
+
+    enext = webdriver.find_element_by_id("identifierNext")
+    enext.click()
+    time.sleep(2)
+    passw = webdriver.find_element_by_name("password")
+    passw.send_keys("testingacc1")
+    time.sleep(2)
+
+    signin = webdriver.find_element_by_id("passwordNext")
+    signin.click()
+    time.sleep(2)
+
+
+def visit_sites(webdriver, slist):
+    webdriver.get("https://accounts.google.com")
+    time.sleep(4)
+    for site in slist:
+        exclude = ['media', 'download']
+        if all(x not in site for x in exclude):
+            webdriver.get(site)
+    webdriver.get("https://accounts.google.com")
+
+
+def clear_google(webdriver):
+    webdriver.get("https://myactivity.google.com")
+    time.sleep(1)
+    dels = webdriver.find_elements_by_partial_link_text("Delete activity by")
+    del1 = dels[len(dels) - 1]
+    del1.click()
+    time.sleep(2)
+    divs = webdriver.find_elements_by_class_name('md-text')
+    for div in divs:
+        if div.text == 'Today':
+            div.click()
+    divs = webdriver.find_elements_by_class_name('md-text')
+    for div in divs:
+        if div.text == 'All time':
+            div.click()
+    buttons = webdriver.find_elements_by_tag_name('button')
+    # buttons[1].click()
+    time.sleep(1)
+    buttons[2].click()
+    buttons = webdriver.find_elements_by_tag_name('button')
+    print(len(buttons))
+
+    buttons[4].click()
+
 
 def process_duke_page(webdriver, manager_params, browser_params):
     download_menu = webdriver.find_element_by_id("download-menu")
@@ -139,9 +223,9 @@ def process_duke_page(webdriver, manager_params, browser_params):
     sock = clientsocket()
     sock.connect(*manager_params['aggregator_address'])
     update_query_string = """
-                UPDATE pages_found SET visited=1, meta=?
-                WHERE url=?
-                """
+				UPDATE pages_found SET visited=1, meta=?
+				WHERE url=?
+				"""
     meta_dict = {}
     item_info = webdriver.find_element_by_id("item-info")
     dt_list = item_info.find_elements_by_tag_name("dt")
@@ -154,6 +238,7 @@ def process_duke_page(webdriver, manager_params, browser_params):
         meta_dict[dt_text] = dd_text
     sock.send((update_query_string, (json.dumps(meta_dict), webdriver.current_url)))
     sock.close()
+
 
 def get_element_text(element):
     text_so_far = ""
@@ -168,29 +253,28 @@ def get_element_text(element):
     return text_so_far
 
 
-
 def process_colo(webdriver, manager_params):
     sock = clientsocket()
     sock.connect(*manager_params['aggregator_address'])
     create_table_query = ("""
-        CREATE TABLE IF NOT EXISTS ads_found (
-          img_source TEXT UNIQUE,
-          table_dict TEXT
-        )
-        """, ())
+		CREATE TABLE IF NOT EXISTS ads_found (
+		  img_source TEXT UNIQUE,
+		  table_dict TEXT
+		)
+		""", ())
     sock.send(create_table_query)
 
     insert_query_string = """
-            INSERT INTO ads_found (img_source, table_dict)
-            VALUES (?, ?)
-            """
+			INSERT INTO ads_found (img_source, table_dict)
+			VALUES (?, ?)
+			"""
     listings = webdriver.find_elements_by_class_name("listing")
     for listing_element in listings:
         try:
             move_to_and_click(webdriver, listing_element)
             img_element = webdriver.find_element_by_class_name("single-media-current-pic")
             img_src = img_element.get_attribute("src")
-            urllib.urlretrieve(img_src, "images/ad-archive/"+img_src.split('/')[-1])
+            urllib.urlretrieve(img_src, "images/ad-archive/" + img_src.split('/')[-1])
             table_element = webdriver.find_element_by_class_name("single-table")
             rows = table_element.find_elements_by_tag_name("tr")
             table_dict = {}
@@ -206,19 +290,18 @@ def process_colo(webdriver, manager_params):
             table_str = json.dumps(table_dict)
             sock.send((insert_query_string, (img_src, table_str)))
 
-            time.sleep(random.random()*8.0 + 3.0)
+            time.sleep(random.random() * 8.0 + 3.0)
         except NoSuchElementException as e:
             tb = traceback.format_exc()
             print tb
-    time.sleep(random.random()*5+5)
+    time.sleep(random.random() * 5 + 5)
     sock.close()
-
 
 
 def close_other_windows(webdriver):
     """
-    close all open pop-up windows and tabs other than the current one
-    """
+	close all open pop-up windows and tabs other than the current one
+	"""
     main_handle = webdriver.current_window_handle
     windows = webdriver.window_handles
     if len(windows) > 1:
@@ -231,8 +314,8 @@ def close_other_windows(webdriver):
 
 def tab_restart_browser(webdriver):
     """
-    kills the current tab and creates a new one to stop traffic
-    """
+	kills the current tab and creates a new one to stop traffic
+	"""
     # note: this technically uses windows, not tabs, due to problems with
     # chrome-targeted keyboard commands in Selenium 3 (intermittent
     # nonsense WebDriverExceptions are thrown). windows can be reliably
@@ -260,8 +343,8 @@ def tab_restart_browser(webdriver):
 def get_website(url, sleep, visit_id, webdriver,
                 browser_params, extension_socket):
     """
-    goes to <url> using the given <webdriver> instance
-    """
+	goes to <url> using the given <webdriver> instance
+	"""
 
     tab_restart_browser(webdriver)
 
@@ -299,19 +382,19 @@ def extract_links(webdriver, browser_params, manager_params):
     sock = clientsocket()
     sock.connect(*manager_params['aggregator_address'])
     create_table_query = ("""
-    CREATE TABLE IF NOT EXISTS links_found (
-      found_on TEXT,
-      location TEXT
-    )
-    """, ())
+	CREATE TABLE IF NOT EXISTS links_found (
+	  found_on TEXT,
+	  location TEXT
+	)
+	""", ())
     sock.send(create_table_query)
 
     if len(link_urls) > 0:
         current_url = webdriver.current_url
         insert_query_string = """
-        INSERT INTO links_found (found_on, location)
-        VALUES (?, ?)
-        """
+		INSERT INTO links_found (found_on, location)
+		VALUES (?, ?)
+		"""
         for link in link_urls:
             sock.send((insert_query_string, (current_url, link)))
 
@@ -340,16 +423,16 @@ def extract_iframes(webdriver, visit_id, browser_params, manager_params):
     sock = clientsocket()
     sock.connect(*manager_params['aggregator_address'])
     create_table_query = ("""
-    CREATE TABLE IF NOT EXISTS iframes_found (
-      visit_id INTEGER,
-      found_on TEXT,
-      location TEXT,
-      frame_id TEXT,       
-      element_attrs TEXT,
-      inner_html TEXT
+	CREATE TABLE IF NOT EXISTS iframes_found (
+	  visit_id INTEGER,
+	  found_on TEXT,
+	  location TEXT,
+	  frame_id TEXT,
+	  element_attrs TEXT,
+	  inner_html TEXT
 
-    )
-    """, ())
+	)
+	""", ())
     sock.send(create_table_query)
 
     webdriver.set_window_size(3000, 800)
@@ -369,7 +452,7 @@ def extract_iframes(webdriver, visit_id, browser_params, manager_params):
     for count, element in enumerate(iframe_elements):
         element_src = element.get_attribute("src")
         file_prefix = ''
-        element_png = element.screenshot_as_png     
+        element_png = element.screenshot_as_png
         if os.path.isfile('{}/{}.png'.format(host_path, element.id)):
             print 'woah file {} already exists'.format(element.id)
 
@@ -381,9 +464,9 @@ def extract_iframes(webdriver, visit_id, browser_params, manager_params):
         inner_html = webdriver.execute_script("return arguments[0].innerHTML;", element)
 
         insert_query_string = """
-        INSERT INTO iframes_found (visit_id, found_on, location, frame_id, element_attrs, inner_html)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """
+		INSERT INTO iframes_found (visit_id, found_on, location, frame_id, element_attrs, inner_html)
+		VALUES (?, ?, ?, ?, ?, ?)
+		"""
 
         sock.send(
             (insert_query_string, (visit_id, current_url, element_src, element.id, str(attrs), inner_html)))
@@ -407,9 +490,9 @@ def browse_website(url, num_links, sleep, visit_id, webdriver,
                    browser_params, manager_params, extension_socket):
     """Calls get_website before visiting <num_links> present on the page.
 
-    Note: the site_url in the site_visits table for the links visited will
-    be the site_url of the original page and NOT the url of the links visited.
-    """
+	Note: the site_url in the site_visits table for the links visited will
+	be the site_url of the original page and NOT the url of the links visited.
+	"""
     # First get the site
     get_website(url, sleep, visit_id, webdriver,
                 browser_params, extension_socket)
@@ -443,10 +526,10 @@ def dump_flash_cookies(start_time, visit_id, webdriver, browser_params,
                        manager_params):
     """ Save newly changed Flash LSOs to database
 
-    We determine which LSOs to save by the `start_time` timestamp.
-    This timestamp should be taken prior to calling the `get` for
-    which creates these changes.
-    """
+	We determine which LSOs to save by the `start_time` timestamp.
+	This timestamp should be taken prior to calling the `get` for
+	which creates these changes.
+	"""
     # Set up a connection to DataAggregator
     tab_restart_browser(webdriver)  # kills window to avoid stray requests
     sock = clientsocket()
@@ -470,14 +553,14 @@ def dump_profile_cookies(start_time, visit_id, webdriver,
                          browser_params, manager_params):
     """ Save changes to Firefox's cookies.sqlite to database
 
-    We determine which cookies to save by the `start_time` timestamp.
-    This timestamp should be taken prior to calling the `get` for
-    which creates these changes.
+	We determine which cookies to save by the `start_time` timestamp.
+	This timestamp should be taken prior to calling the `get` for
+	which creates these changes.
 
-    Note that the extension's cookieInstrument is preferred to this approach,
-    as this is likely to miss changes still present in the sqlite `wal` files.
-    This will likely be removed in a future version.
-    """
+	Note that the extension's cookieInstrument is preferred to this approach,
+	as this is likely to miss changes still present in the sqlite `wal` files.
+	This will likely be removed in a future version.
+	"""
     # Set up a connection to DataAggregator
     tab_restart_browser(webdriver)  # kills window to avoid stray requests
     sock = clientsocket()
@@ -702,17 +785,17 @@ def recursive_dump_page_source_to_db(visit_id, driver, manager_params):
     sock = clientsocket()
     sock.connect(*manager_params['aggregator_address'])
     create_table_query = ("""
-    CREATE TABLE IF NOT EXISTS recursive_source (
-      visit_id INTEGER,
-      source TEXT
-    )
-    """, ())
+	CREATE TABLE IF NOT EXISTS recursive_source (
+	  visit_id INTEGER,
+	  source TEXT
+	)
+	""", ())
     sock.send(create_table_query)
 
     insert_query_string = """
-        INSERT INTO recursive_source (visit_id, source)
-        VALUES (?, ?)
-        """
+		INSERT INTO recursive_source (visit_id, source)
+		VALUES (?, ?)
+		"""
     source_json = json.dumps(page_source).encode('utf-8')
     sock.send((insert_query_string, (visit_id, source_json)))
 
@@ -773,4 +856,3 @@ def screenshot_iframes_containing_ads_recursively(adblock, webdriver, browser_pa
     if not os.path.exists(host_path):
         os.makedirs(host_path)
     execute_in_all_frames(webdriver, analyze_frame, {'adblock': adblock})
-
