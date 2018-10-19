@@ -23,8 +23,8 @@ def process_subreddit(manager, sub, pages):
 
 if __name__ == "__main__":
     manager = TaskManager.TaskManager(manager_params, browser_params)
-    subs = ['baseball', 'mma', 'christianity', 'linux', 'ethereum', 'the_donald', 'sandersforpresident']
+    subs = ['worldnews']
     for sub in subs:
-        process_subreddit(manager, sub, 20)
+        process_subreddit(manager, sub, 25)
 
     time.sleep(1000)
