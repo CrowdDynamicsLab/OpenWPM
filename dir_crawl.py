@@ -57,7 +57,7 @@ def visit_site(manager, site):
     manager.execute_command_sequence(command_sequence, index='**')
 
 def get_ads(manager, sites):
-    for i in range(3):
+    for i in range(20):
         for site in sites:
             command_sequence = CommandSequence.CommandSequence(site, reset=False)
             command_sequence.get(sleep=5, timeout=60)
@@ -110,17 +110,16 @@ def get_sites_to_visit_from_db():
     return sites_to_visit
 
 ###List of subreddit csvs to crawl on - nick
-subs = ['baseball','MMA','Christianity','SandersForPresident','The_Donald']
-subs= ['SandersForPresident']
+subs = ['golf','women fashion', 'camping']
 #
 if __name__ == "__main__":
     # Instantiates the measurement platform
     # Commands time out by default after 60 seconds
     newsdf = pd.read_csv('/home/nick/Development/OpenWPM/sublinks/worldnews.csv')
     news = []
-    for i in range(20):
-        #news.append(newsdf.iloc[int(np.random.random()*len(newsdf))][0])
-        news.append(newsdf.iloc[i][0])
+    for i in range(15):
+        news.append(newsdf.iloc[int(np.random.random()*len(newsdf))][0])
+        #news.append(newsdf.iloc[i][0])
     for sub in subs:
         manager_params, browser_params = TaskManager.load_default_params(NUM_BROWSERS)
         dir = sub
@@ -140,10 +139,10 @@ if __name__ == "__main__":
         command_sequence.clear_google()
         manager.execute_command_sequence(command_sequence,index = '**')
         time.sleep(20)
-        linkdf = pd.read_csv('/home/nick/Development/OpenWPM/sublinks/' + sub + '.csv')
+        linkdf = pd.read_csv('/home/nick/Development/OpenWPM/googlinks/' + sub + '.csv')
 
         ###i is the number of pages to randomly select and visit 0 - nick
-        for i in range(20):
+        for i in range(40):
             #sites.append(linkdf.iloc[int(np.random.random()*len(linkdf))][0])
             sites.append(linkdf.iloc[i][0])
         command_sequence = CommandSequence.CommandSequence('https://google.com', reset = False)

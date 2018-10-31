@@ -23,7 +23,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from scipy.stats import chi2_contingency
 
-subs = ['baseball','SandersForPresident']
+subs = ['camping','golf', 'women fashion']
 
 ydim = 64
 xdim = 64
@@ -34,7 +34,7 @@ def convert_imgs():
 	paths = []
 	imgs = []
 	for sub in subs:
-		dir = "../crawl_data/" + sub + '/screenshots/iframes/'
+		dir = "crawl_data/" + sub + '/screenshots/iframes/'
 
 		for subdir in os.listdir(dir):
 			for fname in os.listdir(dir+subdir):
@@ -56,29 +56,45 @@ imgs = prep.scale(imgs)
 pca = PCA(n_components=6)
 
 
-for clusters in [2,4,8,16,32]: #numbers of clusters to try
+for clusters in [32,64]: #numbers of clusters to try
 	x = pca.fit(imgs).transform(imgs)
 	kmeans = KMeans(init ='k-means++', n_clusters = clusters)
 	kmeans.fit(x)
 
 	labels = kmeans.labels_
-	'''
+
 	for i in range(len(kmeans.cluster_centers_)):
 		if 'center_'+str(i) not in os.listdir('clustering/'):
-			os.mkdir('clustering/center_'+str(i))'''
+			os.mkdir('clustering/center_'+str(i))
+	if clusters == 64:
+		for i in range(len(paths)):
+			shutil.copy2(paths[i], 'clustering/center_'+str(labels[i]))
 	sub_hist = {}
 	for sub in subs:
 		sub_hist[sub] = []
 		for i in range(clusters):
 			sub_hist[sub].append(0)
-
+	print(labels)
+	print(paths)
 	for i in range(len(x)):
-		sub_hist[paths[i].split('/')[2]][labels[i]] +=1
+		sub_hist[paths[i].split('/')[1]][labels[i]] +=1
 		#shutil.copy2(paths[i], 'clustering/center_'+str(labels[i]))
 
 	for sub in subs:
 		s = np.sum(sub_hist[sub])
 		sub_hist[sub] = [float(x)/float(s) for x in sub_hist[sub]]
+		rem = []
+		for i in range(len(sub_hist[sub])):
+			if sub_hist[sub][i] > .1:
+				rem.append(i)
+		rem.sort(reverse=True)
+		for sub in subs:
+			for num in rem:
+				sub_hist[sub][num] = 0
+	for sub in subs:
+		s = np.sum(sub_hist[sub])
+		sub_hist[sub] = [float(x)/float(s) for x in sub_hist[sub]]
+		plt.figure()
 		plt.bar(range(clusters),sub_hist[sub])
 		plt.savefig(sub+str(clusters)+'.png')
 
