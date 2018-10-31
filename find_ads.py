@@ -50,7 +50,7 @@ def check_requests_in_database(rules):
 
 def get_adblock_rules(rulefilename):
     ruletext = parse_rulefile(rulefilename)
-    rules = AdblockRules(ruletext)
+    rules = AdblockRules(ruletext, use_re2=False)
     return rules
 
 

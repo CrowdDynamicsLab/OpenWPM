@@ -70,7 +70,7 @@ def query_source_for_hash(rules, query_file_hash):
     print frame_ids_with_ads
             
 def find_ads(rules):
-    \
+    pass
 
 def get_requests_from_database():
     conn = sqlite3.connect(DB_FILE)
@@ -88,7 +88,7 @@ def check_requests_in_database(rules):
 
 def get_adblock_rules(rulefilename):
     ruletext = parse_rulefile(rulefilename)
-    rules = AdblockRules(ruletext)
+    rules = AdblockRules(ruletext, use_re2=False)
     return rules
 
 if __name__ == "__main__":

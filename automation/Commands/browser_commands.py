@@ -829,8 +829,9 @@ def get_ad_images_recursively(adblock, visit_id, webdriver, browser_params, mana
         img_list = driver.find_elements_by_tag_name('img')
         for img in img_list:
             img_src = img.get_attribute('src')
+            print img_src
             if img_src and adblock.should_block(img_src):
-                # print 'ad_img_src: {}'.format(img_src)
+                print 'ad_img_src: {}'.format(img_src)
                 # get this image that adblock thinks we should block
                 current_url = webdriver.current_url
                 screenshots_path = '{}/images'.format(manager_params['screenshot_path'])
