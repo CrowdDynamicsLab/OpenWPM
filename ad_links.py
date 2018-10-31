@@ -14,8 +14,31 @@ def find_links_in_source_recursively(frame_id, source, found_on):
     for a in a_list:
         a_href = a.get('href')
         if a_href:
-            conn.execute("INSERT INTO ad_links (frame_id, link) VALUES(?, ?)", (frame_id, urljoin(found_on, a_href)))
+            conn.execute("INSERT INTO ad_links (frame_id, link, type) VALUES(?, ?, ?)", (frame_id, urljoin(found_on, a_href), "a"))
             conn.commit()
+    iframe_list = frame_soup.find_all('iframe')
+    for iframe in iframe_list:
+        iframe_src = iframe.get('src')
+        if iframe_src:
+            conn.execute("INSERT INTO ad_links (frame_id, link, type) VALUES(?, ?, ?)",
+                         (frame_id, urljoin(found_on, iframe_src), "iframe"))
+            conn.commit()
+    img_list = frame_soup.find_all('img')
+    for img in img_list:
+        img_src = img.get('src')
+        if img_src:
+            conn.execute("INSERT INTO ad_links (frame_id, link, type) VALUES(?, ?, ?)",
+                         (frame_id, urljoin(found_on, img_src), "img"))
+            conn.commit()
+
+    script_list = frame_soup.find_all("script")
+    for script in script_list:
+        script_src = script.get('src')
+        if script_src:
+            conn.execute("INSERT INTO ad_links (frame_id, link, type) VALUES(?, ?, ?)",
+                         (frame_id, urljoin(found_on, script_src), "script"))
+            conn.commit()
+
     for next_frame_id, next_source in source['iframes'].iteritems():
         # i'm going to call this with frame_id rather than next_frame_id so that the top level frame_id are the only
         # ones inserted into the db, since the ad image files have a filename associated with the top level frame id
@@ -37,5 +60,5 @@ if __name__ == "__main__":
     conn.execute("DROP TABLE IF EXISTS ad_links")
     conn.commit()
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS ad_links (frame_id TEXT, link TEXT)")
+        "CREATE TABLE IF NOT EXISTS ad_links (frame_id TEXT, link TEXT, type TEXT)")
     get_ads_from_db()

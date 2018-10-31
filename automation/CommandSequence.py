@@ -242,12 +242,12 @@ class CommandSequence:
         command = ('GET_IMAGES_RECURSIVELY',)
         self.commands_with_timeout.append((command, timeout))
 
-    def screenshot_iframes_containing_ads_recursively(self, adblock, timeout=30):
+    def get_ad_images_recursively(self, adblock, timeout=30):
         self.total_timeout += timeout
         if not self.contains_get_or_browse:
             raise CommandExecutionError(
-                "No get or browse request preceding the screenshot_iframe_containing_ads_recursively command", self)
-        command = ('SCREENSHOT_IFRAME_CONTAINING_ADS_RECURSIVELY', adblock,)
+                "No get or browse request preceding the GET_AD_IMAGES_RECURSIVELY command", self)
+        command = ('GET_AD_IMAGES_RECURSIVELY', adblock,)
         self.commands_with_timeout.append((command, timeout))
 
     def run_custom_function(self, function_handle, func_args=(), timeout=30):

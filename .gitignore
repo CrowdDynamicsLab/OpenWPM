@@ -73,3 +73,5 @@ docs/_build/
 # Rick stuff
 images/
 *.dict
+
+profiles/
