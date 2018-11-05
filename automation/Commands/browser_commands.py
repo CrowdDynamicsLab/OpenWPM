@@ -155,6 +155,27 @@ def process_reddit(webdriver, manager_params, browser_params):
                 print(link)
                 csvwriter.writerow([link])
 
+def process_google(webdriver, manager_params, browser_params, t):
+    links = webdriver.find_elements_by_tag_name('a')
+    exclude = ['google', "/search", "imdb","hbo","youtube"]
+    linklist = []
+    for link in links:
+        if(link.get_attribute("href") == None):
+            continue
+        if ('https' in link.get_attribute("href") and not (any(x in link.get_attribute("href") for x in exclude))):
+            linklist.append(link.get_attribute("href"))
+    path = 'googlinks/'
+
+    if t + '.csv' in os.listdir(path):
+        with open(path + t+ '.csv', 'a') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            for link in linklist:
+                csvwriter.writerow([link])
+    else:
+        with open(path + t + '.csv', 'wb') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            for link in linklist:
+                csvwriter.writerow([link])
 
 def google_login(webdriver):
     webdriver.get("https://accounts.google.com")

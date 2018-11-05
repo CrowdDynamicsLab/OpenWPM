@@ -61,7 +61,9 @@ def get_ads(manager, sites):
         for site in sites:
             command_sequence = CommandSequence.CommandSequence(site, reset=False)
             command_sequence.get(sleep=5, timeout=60)
-            command_sequence.extract_iframes(timeout=60)
+            command_sequence.extract_links(timeout=90)
+            command_sequence.recursive_dump_page_source_to_db(timeout=90)
+            command_sequence.extract_iframes(timeout=90)
             manager.execute_command_sequence(command_sequence, index='**')
 
 def get_sites_to_visit_from_db():
@@ -153,6 +155,7 @@ if __name__ == "__main__":
             print(i)
             command_sequence.visit_sites([sites[i]])
         command_sequence.dump_profile(dump_folder="/home/nick/Development/crawl_data/" + dir + '/')
+        command_sequence.dump_profile_cookies(dump_folder="/home/nick/Development/crawl_data/" + dir + '/')
         manager.execute_command_sequence(command_sequence,index = '**')
         ###add a sleep so only one crawl is going on at a time - nick
         time.sleep(20)

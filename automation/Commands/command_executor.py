@@ -82,6 +82,15 @@ def execute_command(command, webdriver, browser_settings, browser_params,
 
             nextp[len(nextp)-1].click()
             time.sleep(2)
+    if command[0] == 'PROCESS_GOOGLE':
+        t = webdriver.current_url.split('=')[1].replace('%20',' ')
+        for i in range(command[1]):
+            print "page ", i
+            browser_commands.process_google(webdriver,manager_params = manager_params, browser_params= browser_params, t= t)
+            time.sleep(2)
+            nextp = webdriver.find_element_by_id('pnnext')
+            nextp.click()
+            time.sleep(2)
 
     if command[0] == 'PROCESS_DUKE_PAGE':
         browser_commands.process_duke_page(webdriver, manager_params=manager_params, browser_params=browser_params)
