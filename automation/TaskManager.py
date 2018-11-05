@@ -513,7 +513,7 @@ class TaskManager:
                               'SAVE_SCREENSHOT',
                               'SCREENSHOT_FULL_PAGE',
                               'DUMP_PAGE_SOURCE',
-                              'RECURSIVE_DUMP_PAGE_SOURCE', 'RECURSIVE_DUMP_PAGE_SOURCE_TO_DB', 'EXTRACT_IFRAMES']:
+                              'RECURSIVE_DUMP_PAGE_SOURCE', 'RECURSIVE_DUMP_PAGE_SOURCE_TO_DB', 'EXTRACT_IFRAMES', 'GET_AD_IMAGES_RECURSIVELY']:
                 start_time = time.time()
                 command += (browser.curr_visit_id,)
             elif command[0] in ['DUMP_FLASH_COOKIES', 'DUMP_PROFILE_COOKIES']:

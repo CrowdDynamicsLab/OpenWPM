@@ -41,6 +41,23 @@ manager_params['data_directory'] = '../crawl_data'
 manager_params['log_directory'] = '../crawl_data'
 
 
+def parse_rulefile(filename):
+    result = []
+    with open(filename, 'r') as fi:
+        line = fi.readline().strip()
+        while line != '':
+            if line[0] != '!' and line[0] != '[':
+                result.append(line)
+            line = fi.readline().strip()
+    print 'loaded rulefile with {} rules'.format(len(result))
+    return result
+
+
+def get_adblock_rules(rulefilename):
+    ruletext = parse_rulefile(rulefilename)
+    rules = AdblockRules(ruletext, use_re2=False)
+    return rules
+
 def get_site_name(url):
     url = url.replace('/', '-')
     if url.find('https') != -1:
@@ -51,15 +68,16 @@ def get_site_name(url):
         return url
 
 
-def visit_site(manager, site):
+def visit_site(manager, site, adblock):
     save_name = get_site_name(site)
     command_sequence = CommandSequence.CommandSequence(site)
 
     # Start by visiting the page
-    command_sequence.get(sleep=20, timeout=90)
+    command_sequence.get(sleep=10, timeout=90)
     command_sequence.extract_links(timeout=90)
     command_sequence.recursive_dump_page_source_to_db(timeout=90)
     command_sequence.extract_iframes(timeout=90)  #do this on every page
+    command_sequence.get_ad_images_recursively(adblock, timeout=200)
     command_sequence.dump_profile_cookies(120)
 
     # index='**' synchronizes visits between the three browsers
@@ -116,15 +134,17 @@ if __name__ == "__main__":
     # Commands time out by default after 60 seconds
     manager = TaskManager.TaskManager(manager_params, browser_params)
 
+    adblock = get_adblock_rules(RULE_FILE)
+
     for site in sites:
-        visit_site(manager, site)
+        visit_site(manager, site, adblock)
 
     time.sleep(30)
     subsequent_visits = get_sites_to_visit_from_db()
     print 'now visiting subsequent sites'
     print subsequent_visits
     for site in subsequent_visits:
-        visit_site(manager, site)
+        visit_site(manager, site, adblock)
 
     # Shuts down the browsers and waits for the data to finish logging
     manager.close()

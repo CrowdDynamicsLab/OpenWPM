@@ -64,7 +64,7 @@ def parse_rulefile(filename):
 
 def get_adblock_rules(rulefilename):
     ruletext = parse_rulefile(rulefilename)
-    rules = AdblockRules(ruletext)
+    rules = AdblockRules(ruletext, use_re2=False)
     return rules
 
 
@@ -84,6 +84,7 @@ for site in sites:
     # command_sequence.extract_links(timeout=30)
     command_sequence.recursive_dump_page_source_to_db()
     command_sequence.extract_iframes()
+    command_sequence.get_ad_images_recursively(rules)
     # command_sequence.recursive_dump_page_source("", timeout=60000)
     #command_sequence.screenshot_iframes_containing_ads_recursively(rules, timeout=60000)
     # dump_profile_cookies/dump_flash_cookies closes the current tab.

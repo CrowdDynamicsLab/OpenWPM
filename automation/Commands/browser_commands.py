@@ -35,7 +35,7 @@ from .utils.webdriver_extensions import (scroll_down,
 from selenium.webdriver.common.by import By
 from six.moves import range
 import six
-from urlparse import urlparse
+from urlparse import urlparse, urljoin
 import csv
 
 # Constants for bot mitigation
@@ -841,32 +841,54 @@ def get_images_recursively(driver, browser_params, manager_params):
     print all_sources
 
 
-def screenshot_iframes_containing_ads_recursively(adblock, webdriver, browser_params, manager_params):
+def get_ad_images_recursively(adblock, visit_id, webdriver, browser_params, manager_params):
     def analyze_frame(driver, frame_stack, adblock=None):
         if len(frame_stack) == 1:
             return
-
-        a_list = driver.find_elements_by_tag_name('a')
-        for a in a_list:
-            a_href = a.get_attribute('href')
-            print a_href
-            if a_href and adblock.should_block(a_href):
-                print 'ad_a_href: {}'.format(a_href)
-                return
-
+        # just a hack for now, we could miss ads this way if they have an innocuous url inside of a detectable
+        # iframe of script source
         img_list = driver.find_elements_by_tag_name('img')
         for img in img_list:
             img_src = img.get_attribute('src')
+            #print img_src
             if img_src and adblock.should_block(img_src):
                 print 'ad_img_src: {}'.format(img_src)
-                return
+                # get this image that adblock thinks we should block
+                current_url = webdriver.current_url
+                screenshots_path = '{}/images'.format(manager_params['screenshot_path'])
+                if not os.path.exists(screenshots_path):
+                    os.makedirs(screenshots_path)
+                '''
+                host = urlparse(current_url).hostname
+                host_path = '{}/{}'.format(screenshots_path, host)
+                if not os.path.exists(host_path):
+                    os.makedirs(host_path)
+                '''
+                img_url = urljoin(current_url, img_src)
+                img_file = urlparse(img_url).path.split('/')[-1]
+                if os.path.exists('{}/{}'.format(screenshots_path, img_file)):
+                    # print 'oops, file already exists: {}'.format(img_file)
+                    pass
+                else:
+                    urllib.urlretrieve(img_url, "{}/{}".format(screenshots_path, img_file))
+                sock = clientsocket()
+                sock.connect(*manager_params['aggregator_address'])
+                create_table_query = ("""
+                	CREATE TABLE IF NOT EXISTS ad_images (
+                	  visit_id INTEGER,
+                	  file_name TEXT
+                	)
+                	""", ())
+                sock.send(create_table_query)
 
-        iframe_list = driver.find_elements_by_tag_name('iframe')
-        for iframe in iframe_list:
-            iframe_src = iframe.get_attribute('src')
-            if iframe_src and adblock.should_block(iframe_src):
-                print 'ad_iframe_src: {}'.format(iframe_src)
-                return
+                insert_query_string = """
+                		INSERT INTO ad_images (visit_id, file_name)
+                		VALUES (?, ?)
+                		"""
+
+                sock.send((insert_query_string, (visit_id, img_file)))
+                sock.close()
+                # return
 
     current_url = webdriver.current_url
     host = urlparse(current_url).hostname

@@ -113,8 +113,8 @@ def execute_command(command, webdriver, browser_settings, browser_params,
     if command[0] == 'GET_IMAGES_RECURSIVELY':
         browser_commands.get_images_recursively(webdriver, browser_params, manager_params)
 
-    if command[0] == 'SCREENSHOT_IFRAME_CONTAINING_ADS_RECURSIVELY':
-        browser_commands.screenshot_iframes_containing_ads_recursively(command[1], webdriver, browser_commands, manager_params)
+    if command[0] == 'GET_AD_IMAGES_RECURSIVELY':
+        browser_commands.get_ad_images_recursively(command[1], command[2], webdriver, browser_commands, manager_params)
 
     if command[0] == 'RUN_CUSTOM_FUNCTION':
         arg_dict = {"command": command,

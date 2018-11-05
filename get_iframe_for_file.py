@@ -109,7 +109,7 @@ def get_requests_from_database():
     
 def get_adblock_rules(rulefilename):
     ruletext = parse_rulefile(rulefilename)
-    rules = AdblockRules(ruletext)
+    rules = AdblockRules(ruletext, use_re2=False)
     return rules
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import sqlite3
 import time
 import json
 import six
+from adblockparser import AdblockRules
 from six.moves import range
 
 
@@ -88,6 +89,9 @@ def process_query(query, curr, logger):
             args[i] = six.text_type(args[i])
         elif isinstance(args[i], list):
             args[i] = json.dumps(args[i])
+        elif isinstance(args[i], AdblockRules):
+            args[i] = "AdblockRules Object"
+
     try:
         if len(args) == 0:
             curr.execute(statement)
