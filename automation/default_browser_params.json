@@ -3,7 +3,7 @@
     "cookie_instrument": false,
     "js_instrument": false,
     "cp_instrument": false,
-    "http_instrument": false,
+    "http_instrument": true,
     "save_javascript": false,
     "save_all_content": false,
 
@@ -23,5 +23,6 @@
     "https-everywhere": false,
     "adblock-plus": false,
     "ublock-origin": false,
-    "tracking-protection": false
+    "tracking-protection": false,
+    "save_JSON": false
 }
