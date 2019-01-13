@@ -118,16 +118,13 @@ def get_sites_to_visit_from_db():
 if __name__ == "__main__":
     # Instantiates the measurement platform
     # Commands time out by default after 60 seconds
-    newsdf = pd.read_csv('/home/nick/Development/OpenWPM/sublinks/worldnews.csv')
-    news = ['https://vox.com']
-        #news.append(newsdf.iloc[i][0])
     subs = ['golf','camping','cooking']
-    for sub in subs:
-        base = '/home/nick/Development/crawl_data/prof_comp/'
+    for i in range(100):
 
-        for i in range(3):
+        base = '/home/nick/Development/crawl_data/'
+        for sub in subs:
             manager_params, browser_params = TaskManager.load_default_params(NUM_BROWSERS)
-            dir = sub + '_' + str(i)
+            dir = sub
             if dir not in os.listdir(base):
                 os.mkdir(base + dir)
             manager_params['data_directory'] = base+dir
@@ -156,22 +153,24 @@ if __name__ == "__main__":
             command_sequence.google_login()
             for i in range(0, len(sites)):
                 command_sequence.visit_sites([sites[i]])
-            command_sequence.dump_profile(dump_folder=base+dir )
+            #command_sequence.dump_profile(dump_folder=base+dir )
             manager.execute_command_sequence(command_sequence,index = '**')
             ###add a sleep so only one crawl is going on at a time - nick
             time.sleep(600)
 
             if 'mozprof' not in os.listdir(base+dir):
                 os.mkdir(base+dir+'/mozprof/')
-            manager_params['data_directory'] = base+dir+'/mozprof/'
-            manager_params['log_directory'] = base+dir+'/mozprof/'
+            #manager_params['data_directory'] = base+dir+'/mozprof/'
+            #manager_params['log_directory'] = base+dir+'/mozprof/'
             #browser_params[0]['profile_archive_dir'] = base+dir+'/mozprof/'
             #browser_params[0]['profile_tar'] = base+dir+'/'
             manager = TaskManager.TaskManager(manager_params, browser_params)
             command_sequence = CommandSequence.CommandSequence('https://google.com', reset = True)
-            for i in range(1):
-                manager = TaskManager.TaskManager(manager_params, browser_params)
-                get_ads(manager, news)
+            news = []
+            for i in range(5):
+                news.append('https://vox.com')
+            manager = TaskManager.TaskManager(manager_params, browser_params)
+            get_ads(manager, news)
 
             time.sleep(10)
 
