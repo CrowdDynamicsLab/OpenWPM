@@ -6,6 +6,7 @@
     "http_instrument": true,
     "save_javascript": false,
     "save_all_content": false,
+    "save_json": false,
 
     "random_attributes": false,
     "bot_mitigation": false,

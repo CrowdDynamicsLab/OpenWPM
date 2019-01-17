@@ -27,6 +27,7 @@ exports.main = function(options, callbacks) {
       cookie_instrument:true,
       js_instrument:true,
       cp_instrument:true,
+      save_json: true,
       http_instrument:true,
       save_javascript:true,
       save_all_content:true,
@@ -55,6 +56,6 @@ exports.main = function(options, callbacks) {
   if (config['http_instrument']) {
     loggingDB.logDebug("HTTP Instrumentation enabled");
     httpInstrument.run(config['crawl_id'], config['save_javascript'],
-                       config['save_all_content']);
+                       config['save_all_content'], config['save_json']);
   }
 };

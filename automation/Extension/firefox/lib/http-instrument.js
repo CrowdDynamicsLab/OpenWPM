@@ -332,6 +332,33 @@ function toHexString(charCode) {
 function binaryHashtoHex(hash) {
   return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
 }
+function logWithJSON(respEvent, update, isJSON) {
+  // log with response body from an 'http-on-examine(-cached)?-response' event
+  var newListener = new TracingListener();
+  respEvent.subject.QueryInterface(Ci.nsITraceableChannel);
+  newListener.originalListener = respEvent.subject.setNewListener(newListener);
+  newListener.promiseDone.then(function() {
+    var respBody = newListener.responseBody; // get response body as a string
+    if(isJSON) {
+        update["content_hash"] = loggingDB.escapeString(JSON.stringify(respBody)); // we are just hijacking the content_hash field for now
+    } else {
+        update['content_hash'] = loggingDB.escapeString(respBody); // it's js so just log it
+    }
+
+    loggingDB.executeSQL(loggingDB.createInsert("http_responses", update), true);
+  }, function(aReason) {
+    loggingDB.logError("Unable to retrieve response body." + JSON.stringify(aReason));
+    update["content_hash"] = "<error>";
+    loggingDB.executeSQL(loggingDB.createInsert("http_responses", update), true);
+  }).catch(function(aCatch) {
+    loggingDB.logError('Unable to retrieve response body.' +
+        'Likely caused by a programming error. Error Message:' +
+        aCatch.name + aCatch.message + '\n' + aCatch.stack);
+    update["content_hash"] = "<error>";
+    loggingDB.executeSQL(loggingDB.createInsert("http_responses", update), true);
+  });
+}
+
 
 function logWithResponseBody(respEvent, update) {
   // log with response body from an 'http-on-examine(-cached)?-response' event
@@ -359,6 +386,42 @@ function logWithResponseBody(respEvent, update) {
     update["content_hash"] = "<error>";
     loggingDB.executeSQL(loggingDB.createInsert("http_responses", update), true);
   });
+}
+
+function isJSON(httpChannel) {
+  // Return true if this channel is loading JSON
+  // This check is relatively unsophisticated compared to isJS
+  var contentType;
+  try {
+    contentType = httpChannel.getResponseHeader("Content-Type");
+  }catch (e) {  // Content-Type may not be present
+    contentType = "";
+  }
+
+  if (contentType && contentType.toLowerCase().includes('json'))
+    return true;
+  var path = httpChannel.URI.path;
+  if (path && path.split('?')[0].split('#')[0].endsWith('.json'))
+    return true;
+  return false;
+}
+
+function isText(httpChannel) {
+  // Return true if this channel is loading JSON
+  // This check is relatively unsophisticated compared to isJS
+  var contentType;
+  try {
+    contentType = httpChannel.getResponseHeader("Content-Type");
+  }catch (e) {  // Content-Type may not be present
+    contentType = "";
+  }
+
+  if (contentType && contentType.toLowerCase().includes('text'))
+    return true;
+  var path = httpChannel.URI.path;
+  if (path && path.split('?')[0].split('#')[0].endsWith('.html'))
+    return true;
+  return false;
 }
 
 function isJS(httpChannel) {
@@ -394,7 +457,7 @@ function isJS(httpChannel) {
 
 // Instrument HTTP responses
 var httpResponseHandler = function(respEvent, isCached, crawlID,
-                                   saveJavascript, saveAllContent) {
+                                   saveJavascript, saveAllContent, saveJSON) {
   var httpChannel = respEvent.subject.QueryInterface(Ci.nsIHttpChannel);
 
   // http_responses table schema:
@@ -451,6 +514,8 @@ var httpResponseHandler = function(respEvent, isCached, crawlID,
 
   if (saveAllContent) {
     logWithResponseBody(respEvent, update);
+  } else if(saveJSON && ( isJSON(httpChannel) || isJS(httpChannel) || isText(httpChannel) )) {
+    logWithJSON(respEvent, update, isJSON(httpChannel))
   } else if (saveJavascript && isJS(httpChannel)) {
     logWithResponseBody(respEvent, update);
   } else {
@@ -462,7 +527,7 @@ var httpResponseHandler = function(respEvent, isCached, crawlID,
  * Attach handlers to event monitor
  */
 
-exports.run = function(crawlID, saveJavascript, saveAllContent) {
+exports.run = function(crawlID, saveJavascript, saveAllContent, saveJSON) {
   // Create sql tables
   var createHttpRequestTable = data.load("create_http_requests_table.sql");
   loggingDB.executeSQL(createHttpRequestTable, false);
@@ -479,14 +544,14 @@ exports.run = function(crawlID, saveJavascript, saveAllContent) {
   }, true);
 
   events.on("http-on-examine-response", function(event) {
-    httpResponseHandler(event, false, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, false, crawlID, saveJavascript, saveAllContent, saveJSON);
   }, true);
 
   events.on("http-on-examine-cached-response", function(event) {
-    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent, saveJSON);
   }, true);
 
   events.on("http-on-examine-merged-response", function(event) {
-    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent, saveJSON);
   }, true);
 };
