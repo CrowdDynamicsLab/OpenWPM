@@ -18,6 +18,7 @@ manager_params, browser_params = TaskManager.load_default_params(NUM_BROWSERS)
 # Update browser configuration (use this for per-browser settings)
 for i in range(NUM_BROWSERS):
     # Record HTTP Requests and Responses
+    browser_params[i]['http_instrument'] = True
     browser_params[i]['save_all_content'] = True
     # Enable flash for all three browsers
     browser_params[i]['disable_flash'] = False
