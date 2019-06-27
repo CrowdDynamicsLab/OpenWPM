@@ -78,13 +78,6 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-# Rick stuff
-images/
-data/
-*.dict
-
-profiles/
-
 # npm packages
 node_modules
 
@@ -93,3 +86,6 @@ automation/Extension/firefox/dist
 automation/Extension/firefox/openwpm.xpi
 automation/Extension/firefox/src/content.js
 automation/Extension/firefox/src/feature.js
+
+# Rick's stuff
+data/
