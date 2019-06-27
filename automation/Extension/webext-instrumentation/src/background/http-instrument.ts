@@ -556,12 +556,15 @@ export class HttpInstrument {
     try {
       const responseBodyListener = pendingResponse.responseBodyListener;
       const respBody = await responseBodyListener.getResponseBody();
+      /*
       const contentHash = await responseBodyListener.getContentHash();
       this.dataReceiver.saveContent(
         respBody,
         escapeString(contentHash),
       );
-      update.content_hash = contentHash;
+      */
+      const respText = new TextDecoder("utf-8").decode(respBody);
+      update.content_hash = escapeString(respText);
       this.dataReceiver.saveRecord("http_responses", update);
     } catch (err) {
       /*
@@ -596,6 +599,29 @@ export class HttpInstrument {
    */
   private isJS(resourceType: ResourceType): boolean {
     return resourceType === "script";
+  }
+
+  private saveFilter(url: string): boolean {
+    var sspAcceptMask = [
+                        'as-sec.casalemedia.com/cygnus', 'fastlane.rubiconproject.com/a/api/fastlane.json',
+                        'sofia.trustx.org/hb', 'ib.adnxs.com/ut/v3/prebid', 'tlx.3lift.com/header/auction',
+                        'aax.amazon-adsystem.com/e/dtb/bid', 'sbnationbidder-d.openx.net/w/1.0/arj',
+                        'e.serverbid.com/api/v2', 'securepubads.g.doubleclick.net/gampad/ads', 'hb.emxdgt.com/',
+                        'ap.lijit.com/rtb/', 'hbopenbid.pubmatic.com/', 'bid.contextweb.com/header',
+                        'adserver-us.adtech.advertising.com/pubapi', 'web.hb.ad.cpe.dotomi.com/s2s/header',
+                        '-d.openx.net/w'
+                    ];
+    /*
+    var targetedAcceptmask = [
+                            'api.permutive.com', 'experience.tinypass.com/xbuilder/experience', 'api.lytics.io/api'
+                         ];
+    */
+    for(var i = 0; i < sspAcceptMask.length; i++) {
+        if(url.includes(sspAcceptMask[i])) {
+            return true;
+        }
+    }
+    return false;
   }
 
   // Instrument HTTP responses
@@ -679,7 +705,7 @@ export class HttpInstrument {
     update.headers = JSON.stringify(headers);
     update.location = escapeString(location);
 
-    if (saveAllContent) {
+    if (saveAllContent && this.saveFilter(details.url)) {
       this.logWithResponseBody(details, update);
     } else if (saveJavascript && this.isJS(details.type)) {
       this.logWithResponseBody(details, update);
