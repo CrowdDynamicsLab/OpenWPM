@@ -35,10 +35,8 @@ manager = TaskManager.TaskManager(manager_params, browser_params)
 # Visits the sites with all browsers simultaneously
 for site in sites:
     command_sequence = CommandSequence.CommandSequence(site)
-
     # Start by visiting the page
     command_sequence.get(sleep=3, timeout=60)
-
     # index='**' synchronizes visits between the three browsers
     manager.execute_command_sequence(command_sequence, index='**')
 
