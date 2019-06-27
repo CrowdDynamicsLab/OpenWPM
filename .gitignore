@@ -80,6 +80,7 @@ docs/_build/
 
 # Rick stuff
 images/
+data/
 *.dict
 
 profiles/

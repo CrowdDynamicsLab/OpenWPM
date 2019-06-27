@@ -562,7 +562,8 @@ export class HttpInstrument {
         respBody,
         escapeString(contentHash),
       ); */
-      update.content_hash = escapeString(respBody);
+      const respText = new TextDecoder("utf-8").decode(respBody);
+      update.content_hash = escapeString(respText);
       this.dataReceiver.saveRecord("http_responses", update);
     } catch (err) {
       /*
