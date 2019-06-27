@@ -1,25 +1,27 @@
 from __future__ import absolute_import
-from .Commands import command_executor
-from .DeployBrowsers import deploy_browser
-from .Commands import profile_commands
-from .SocketInterface import clientsocket
-from .MPLogger import loggingclient
-from .Errors import ProfileLoadError, BrowserConfigError, BrowserCrashError
 
 import errno
-from multiprocess import Process, Queue
-from six.moves.queue import Empty as EmptyQueue
-from tblib import pickling_support
-from six import reraise
-import traceback
-import tempfile
-from six.moves import cPickle as pickle
+import os
 import shutil
 import signal
-import psutil
-import time
 import sys
-import os
+import tempfile
+import time
+import traceback
+
+import psutil
+from multiprocess import Process, Queue
+from six import reraise
+from six.moves import cPickle as pickle
+from six.moves.queue import Empty as EmptyQueue
+from tblib import pickling_support
+
+from .Commands import command_executor, profile_commands
+from .DeployBrowsers import deploy_browser
+from .Errors import BrowserConfigError, BrowserCrashError, ProfileLoadError
+from .MPLogger import loggingclient
+from .SocketInterface import clientsocket
+
 pickling_support.install()
 
 
@@ -33,6 +35,7 @@ class Browser:
      <browser_params> are per-browser parameter settings (e.g. whether
                       this browser is headless, etc.)
      """
+
     def __init__(self, manager_params, browser_params):
         # Constants
         self._SPAWN_TIMEOUT = 120  # seconds
@@ -125,7 +128,7 @@ class Browser:
                     'Browser spawn returned failure status')
 
         while (not success and
-               unsuccessful_spawns < self._UNSUCCESSFUL_SPAWN_LIMIT):
+                unsuccessful_spawns < self._UNSUCCESSFUL_SPAWN_LIMIT):
             self.logger.debug("BROWSER %i: Spawn attempt %i " % (
                 self.crawl_id, unsuccessful_spawns))
             # Resets the command/status queues
@@ -226,8 +229,8 @@ class Browser:
                 self.crawl_id, self.browser_manager.pid, self.display_pid,
                 self.display_port, self.browser_pid)
         )
-        if (self.browser_manager is not None
-                and self.browser_manager.pid is not None):
+        if (self.browser_manager is not None and
+                self.browser_manager.pid is not None):
             try:
                 os.kill(self.browser_manager.pid, signal.SIGKILL)
             except OSError:
@@ -360,7 +363,7 @@ def BrowserManager(command_queue, status_queue, browser_params,
                     with open(ep_filename, 'rt') as f:
                         port = int(f.read().strip())
                         break
-                except OSError as e:
+                except IOError as e:
                     if e.errno != errno.ENOENT:
                         raise
                 time.sleep(0.1)
@@ -411,7 +414,7 @@ def BrowserManager(command_queue, status_queue, browser_params,
         err_info = sys.exc_info()
         status_queue.put(('CRITICAL', pickle.dumps(err_info)))
         return
-    except Exception as e:
+    except Exception:
         excp = traceback.format_exception(*sys.exc_info())
         logger.info("BROWSER %i: Crash in driver, restarting browser manager "
                     "\n %s" % (browser_params['crawl_id'], ''.join(excp)))

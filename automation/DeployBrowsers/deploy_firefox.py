@@ -1,18 +1,19 @@
 from __future__ import absolute_import
 
-from selenium import webdriver
 import json
 import os.path
 import random
 
-from . import configure_firefox
-from .selenium_firefox import (FirefoxProfile, FirefoxBinary,
-                               FirefoxLogInterceptor, Options)
+from pyvirtualdisplay import Display
+from selenium import webdriver
+
 from ..Commands.profile_commands import load_profile
 from ..MPLogger import loggingclient
-from ..utilities.platform_utils import ensure_firefox_in_path
-
-from pyvirtualdisplay import Display
+from ..utilities.platform_utils import (get_firefox_binary_path,
+                                        get_geckodriver_exec_path)
+from . import configure_firefox
+from .selenium_firefox import (FirefoxBinary, FirefoxLogInterceptor,
+                               FirefoxProfile, Options)
 
 DEFAULT_SCREEN_RES = (1366, 768)
 
@@ -22,7 +23,8 @@ def deploy_firefox(status_queue, browser_params, manager_params,
     """
     launches a firefox instance with parameters set by the input dictionary
     """
-    ensure_firefox_in_path()
+    firefox_binary_path = get_firefox_binary_path()
+    geckodriver_executable_path = get_geckodriver_exec_path()
 
     root_dir = os.path.dirname(__file__)  # directory of this file
     logger = loggingclient(*manager_params['logger_address'])
@@ -98,26 +100,26 @@ def deploy_firefox(status_queue, browser_params, manager_params,
         display_port = display.cmd_param[-1][1:]
     status_queue.put(('STATUS', 'Display', (display_pid, display_port)))
 
-    # Write extension configuration
     if browser_params['extension_enabled']:
-        ext_loc = os.path.join(root_dir, '../Extension/firefox/openwpm.xpi')
-        ext_loc = os.path.normpath(ext_loc)
-        fp.add_extension(extension=ext_loc)
-        fo.set_preference("extensions.@openwpm.sdk.console.logLevel", "all")
+        # Write config file
         extension_config = dict()
         extension_config.update(browser_params)
         extension_config['logger_address'] = manager_params['logger_address']
-        extension_config['sqlite_address'] = manager_params[
+        extension_config['aggregator_address'] = manager_params[
             'aggregator_address']
         if 'ldb_address' in manager_params:
             extension_config['leveldb_address'] = manager_params['ldb_address']
         else:
             extension_config['leveldb_address'] = None
         extension_config['testing'] = manager_params['testing']
-        with open(browser_profile_path + 'browser_params.json', 'w') as f:
+        ext_config_file = browser_profile_path + 'browser_params.json'
+        with open(ext_config_file, 'w') as f:
             json.dump(extension_config, f)
-        logger.debug("BROWSER %i: OpenWPM Firefox extension loaded"
-                     % browser_params['crawl_id'])
+        logger.debug("BROWSER %i: Saved extension config file to: %s" %
+                     (browser_params['crawl_id'], ext_config_file))
+
+        # TODO restore detailed logging
+        # fo.set_preference("extensions.@openwpm.sdk.console.logLevel", "all")
 
     # Disable flash
     if browser_params['disable_flash']:
@@ -125,9 +127,6 @@ def deploy_firefox(status_queue, browser_params, manager_params,
     else:
         fo.set_preference('plugin.state.flash', 2)
         fo.set_preference('plugins.click_to_play', False)
-
-    # Prevent e10s
-    fo.set_preference("browser.tabs.remote.autostart.2", False)
 
     # Configure privacy settings
     configure_firefox.privacy(browser_params, fp, fo, root_dir,
@@ -153,9 +152,20 @@ def deploy_firefox(status_queue, browser_params, manager_params,
 
     # Launch the webdriver
     status_queue.put(('STATUS', 'Launch Attempted', None))
-    fb = FirefoxBinary()
+    fb = FirefoxBinary(firefox_path=firefox_binary_path)
     driver = webdriver.Firefox(firefox_profile=fp, firefox_binary=fb,
+                               executable_path=geckodriver_executable_path,
                                firefox_options=fo, log_path=interceptor.fifo)
+
+    # Add extension
+    if browser_params['extension_enabled']:
+
+        # Install extension
+        ext_loc = os.path.join(root_dir, '../Extension/firefox/openwpm.xpi')
+        ext_loc = os.path.normpath(ext_loc)
+        driver.install_addon(ext_loc, temporary=True)
+        logger.debug("BROWSER %i: OpenWPM Firefox extension loaded"
+                     % browser_params['crawl_id'])
 
     # set window size
     driver.set_window_size(*profile_settings['screen_res'])
@@ -171,4 +181,4 @@ def deploy_firefox(status_queue, browser_params, manager_params,
     status_queue.put(('STATUS', 'Browser Launched',
                       (int(pid), profile_settings)))
 
-    return driver, interceptor.profile_path, profile_settings
+    return driver, driver.capabilities["moz:profile"], profile_settings

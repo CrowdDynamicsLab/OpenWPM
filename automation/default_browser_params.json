@@ -2,11 +2,9 @@
     "extension_enabled": true,
     "cookie_instrument": false,
     "js_instrument": false,
-    "cp_instrument": false,
-    "http_instrument": true,
+    "http_instrument": false,
     "save_javascript": false,
     "save_all_content": false,
-    "save_json": false,
 
     "random_attributes": false,
     "bot_mitigation": false,
@@ -24,6 +22,5 @@
     "https-everywhere": false,
     "adblock-plus": false,
     "ublock-origin": false,
-    "tracking-protection": false,
-    "save_JSON": false
+    "tracking-protection": false
 }
