@@ -19,7 +19,22 @@ from ...utilities import domain_utils as du
 from . import XPathUtil
 
 # Basic functions
+def scroll_percent(webdriver):
+    scroll_max = float(
+        webdriver.execute_script("return document.documentElement.scrollTopMax || document.body.scrollTopMax"))
+    if scroll_max == 0.0:
+        scroll_max = 1.0
+    scroll_current = float(
+        webdriver.execute_script("return document.documentElement.scrollTop || document.body.scrollTop"))
+    return scroll_current / scroll_max
 
+def is_percent_scrolled(webdriver, pct):
+    scroll_max = float(webdriver.execute_script("return document.documentElement.scrollTopMax || document.body.scrollTopMax"))
+    if scroll_max == 0.0:
+        scroll_max = 1.0
+    scroll_current = float(webdriver.execute_script("return document.documentElement.scrollTop || document.body.scrollTop"))
+    print 'scroll_current: {}, scroll_max: {}, ratio: {}'.format(scroll_current, scroll_max, scroll_current/scroll_max)
+    return scroll_current / scroll_max > pct
 
 def scroll_down(driver):
     at_bottom = False
