@@ -92,10 +92,14 @@ class LocalListener(BaseListener):
         if len(record) != 2:
             self.logger.error("Query is not the correct length")
             return
-        if record[0] == "create_table":
+        # RB: OpenWPM has no support for deletes or updates in the aggregator, fix that
+        # by changing
+        # if record[0] == "create_table":
+        # to if record[0] == "create_table" or record[0] == 'update' or record[0] == 'delete':
+        if record[0] == "create_table" or record[0] == 'update' or record[0] == 'delete':
             self.cur.execute(record[1])
             self.db.commit()
-            return
+            return                
         elif record[0] == RECORD_TYPE_CONTENT:
             self.process_content(record)
             return
