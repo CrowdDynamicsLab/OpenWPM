@@ -708,9 +708,9 @@ export class HttpInstrument {
     if (saveAllContent && this.saveFilter(details.url)) {
       this.logWithResponseBody(details, update);
     } else if (saveJavascript && this.isJS(details.type)) {
-      this.logWithResponseBody(details, update);
+      //this.logWithResponseBody(details, update);
     } else {
-      this.dataReceiver.saveRecord("http_responses", update);
+      //this.dataReceiver.saveRecord("http_responses", update);
     }
   }
 }
